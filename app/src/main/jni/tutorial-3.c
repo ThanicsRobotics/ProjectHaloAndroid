@@ -41,7 +41,8 @@ static JavaVM *java_vm;
 static jfieldID custom_data_field_id;
 static jmethodID set_message_method_id;
 static jmethodID on_gstreamer_initialized_method_id;
-
+static jfieldID pipeline_field_id;
+const gchar *pipelineString;
 /*
  * Private methods
  */
@@ -160,9 +161,10 @@ static void *app_function (void *userdata) {
   //data->pipeline = gst_parse_launch("tcpserversrc port=5001 ! application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)H264,packetization-mode=(string)1,profile-level-id=(string)640028,payload=(int)96,ssrc=(uint)1748482228,timestamp-offset=(uint)1596184480,seqnum-offset=(uint)2320 ! rtph264depay ! openh264dec ! videoconvert ! autovideosink sync=false", &error);
     //data->pipeline = gst_parse_launch("udpsrc port=5001 ! application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)H264,packetization-mode=(string)1,profile-level-id=(string)640028,payload=(int)96,ssrc=(uint)1748482228,timestamp-offset=(uint)1596184480,seqnum-offset=(uint)2320 ! rtph264depay ! openh264dec ! videoconvert ! autovideosink sync=false", &error);
                                                                     //application/x-rtp\,\ media\=\(string\)video\,\ clock-rate\=\(int\)90000\,\ encoding-name\=\(string\)H264\,\ packetization-mode\=\(string\)1\,\ profile-level-id\=\(string\)640028\,\ sprop-parameter-sets\=\(string\)\"J2QAKKwrQDwBE/LAPEiagA\\\=\\\=\\\,KO4CXLA\\\=\"\,\ payload\=\(int\)96\,\ ssrc\=\(uint\)1748482228\,\ timestamp-offset\=\(uint\)1596184480\,\ seqnum-offset\=\(uint\)2320
-    data->pipeline = gst_parse_launch("tcpclientsrc host=192.168.42.42 port=5001 ! application/x-rtp-stream, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640028, sprop-parameter-sets=(string)\"J2QAKKwrQDwBE/LAPEiagA\\\=\\\=\\\,KO4CXLA\\\=\", payload=(int)96, ssrc=(uint)1748482228, timestamp-offset=(uint)1596184480, seqnum-offset=(uint)2320 ! rtpstreamdepay ! decodebin ! videoconvert ! autovideosink sync=false", &error);
+    //data->pipeline = gst_parse_launch("udpsrc port=5001 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQDADb9QDxImo\\\,KO4CXLA\\\=\", payload=(int)96, ssrc=(uint)3175186120, timestamp-offset=(uint)4187265540, seqnum-offset=(uint)2103, a-framerate=(string)40 ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! decodebin ! video/x-raw, framerate=(fraction)40/1 ! videoconvert ! autovideosink sync=false", &error);
     //data->pipeline = gst_parse_launch("tcpclientsrc host=192.168.42.42 port=5001 ! video/x-h264, stream-format=(string)avc, alignment=(string)au, codec_data=(buffer)01640028ffe1000f27640028ac2b402802efc900f1226a01000528ee01372c ! decodebin ! autovideosink", &error);
     //data->pipeline = gst_parse_launch("videotestsrc ! autovideosink", &error);
+    data->pipeline = gst_parse_launch(pipelineString, &error);
     if (error) {
         gchar *message = g_strdup_printf("Unable to build pipeline: %s", error->message);
         g_clear_error (&error);
@@ -215,6 +217,9 @@ static void *app_function (void *userdata) {
 
 /* Instruct the native code to create its internal data structure, pipeline and thread */
 static void gst_native_init (JNIEnv* env, jobject thiz) {
+    jstring pipeline_jString = (*env)->GetObjectField(env, thiz, pipeline_field_id);
+    pipelineString = (*env)->GetStringUTFChars(env, pipeline_jString, 0);
+
   CustomData *data = g_new0 (CustomData, 1);
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, data);
   GST_DEBUG_CATEGORY_INIT (debug_category, "tutorial-3", 0, "Android tutorial 3");
@@ -260,6 +265,9 @@ static void gst_native_pause (JNIEnv* env, jobject thiz) {
 /* Static class initializer: retrieve method and field IDs */
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
   custom_data_field_id = (*env)->GetFieldID (env, klass, "native_custom_data", "J");
+    pipeline_field_id = (*env)->GetFieldID (env, klass, "pipelineStr", "Ljava/lang/String;");
+
+
   //set_message_method_id = (*env)->GetMethodID (env, klass, "setMessage", "(Ljava/lang/String;)V");
   on_gstreamer_initialized_method_id = (*env)->GetMethodID (env, klass, "onGStreamerInitialized", "()V");
 
@@ -334,7 +342,8 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print (ANDROID_LOG_ERROR, "tutorial-3", "Could not retrieve JNIEnv");
     return 0;
   }
-  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoFlightActivity");
+  //jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoFlightActivity");
+    jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoImageView");
   (*env)->RegisterNatives (env, klass, native_methods, G_N_ELEMENTS(native_methods));
 
   pthread_key_create (&current_jni_env, detach_current_thread);

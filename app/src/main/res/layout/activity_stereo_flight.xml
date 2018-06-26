@@ -4,14 +4,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".StereoFlightActivity">
+    tools:context=".StereoFlightActivity"
+    tools:layout_editor_absoluteY="25dp">
 
-    <SurfaceView
-        android:id="@+id/surfaceViewStereo"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.thanics.andrew.halocontrol.StereoImageView
+            android:id="@+id/stereoImageView"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:pipeline="udpsrc port=5001 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAET8sA8SJq\\\,KO4CXLA\\\=\&quot;, payload=(int)96, ssrc=(uint)2223015419, timestamp-offset=(uint)2228716040, seqnum-offset=(uint)8445, a-framerate=(string)40 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false"/>
+
+        <com.thanics.andrew.halocontrol.StereoImageView
+            android:id="@+id/stereoImageView2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:pipeline="udpsrc port=5002 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAET8sA8SJq\\\,KO4CXLA\\\=\&quot;, payload=(int)96, ssrc=(uint)2223015419, timestamp-offset=(uint)2228716040, seqnum-offset=(uint)8445, a-framerate=(string)40 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false"/>
+    </LinearLayout>
+
 </android.support.constraint.ConstraintLayout>

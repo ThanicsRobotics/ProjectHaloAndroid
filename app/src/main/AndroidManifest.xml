@@ -37,19 +37,12 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         >
         <activity
-            android:name=".MainActivity"
-            android:screenOrientation="landscape">
+            android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".FlightActivity"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-
         </activity>
         <activity
             android:name=".StereoFlightActivity"

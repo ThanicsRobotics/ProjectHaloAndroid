@@ -27,30 +27,6 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
     public StereoImageView(Context context) {
         super(context);
 
-//
-//        System.loadLibrary("gstreamer_android");
-//        System.loadLibrary("tutorial-3");
-//
-//        // Initialize GStreamer and warn if it fails
-//        try {
-//            GStreamer.init(context);
-//        } catch (Exception e) {
-//            Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
-//            //finish();
-//            return;
-//        }
-
-//        SurfaceHolder sh = this.getHolder();
-//        sh.addCallback(this);
-
-//        nativeClassInit();
-        //this.pipeline = pipeline;
-        //is_playing_desired = true;
-
-//        nativeClassInit();
-//        nativeInit();
-//        nativePlay();
-
     }
 
     public StereoImageView(Context context, AttributeSet attrs,
@@ -78,7 +54,6 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
 
     private void onGStreamerInitialized () {
         Log.d("Halo", "gst init");
-//        nativeInit();
         nativePlay();
     }
 
@@ -89,13 +64,12 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
         System.loadLibrary("gstreamer_android");
         System.loadLibrary("tutorial-3");
         nativeClassInit();
-
+        
         // Initialize GStreamer and warn if it fails
         try {
             GStreamer.init(this.getContext());
         } catch (Exception e) {
             Toast.makeText(this.getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-            //finish();
             return;
         }
         nativeInit();
@@ -111,7 +85,14 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
 
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.d(GST_TAG, "Surface destroyed");
-        nativeSurfaceFinalize ();
+        nativePause();
+        nativeSurfaceFinalize();
         nativeFinalize();
     }
+
+//    static {
+//        System.loadLibrary("gstreamer_android");
+//        System.loadLibrary("tutorial-3");
+//        nativeClassInit();
+//    }
 }

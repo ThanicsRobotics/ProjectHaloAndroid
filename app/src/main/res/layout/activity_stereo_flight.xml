@@ -10,6 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#000000"
         android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -17,15 +18,24 @@
             android:id="@+id/stereoImageView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginBottom="0dp"
+            android:layout_marginEnd="35dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="60dp"
             android:layout_weight="1"
-            app:pipeline="udpsrc port=5001 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAET8sA8SJq\\\,KO4CXLA\\\=\&quot;, payload=(int)96, ssrc=(uint)2223015419, timestamp-offset=(uint)2228716040, seqnum-offset=(uint)8445, a-framerate=(string)40 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false"/>
+            app:pipeline="videotestsrc ! glimagesink"/>
+            <!--app:pipeline="udpsrc port=5001 ! application/x-rtp-stream, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAOfzwDxImo\\\,KO4CXLA\\\=\&quot;, payload=(int)96, a-framerate=(string)40 ! rtpstreamdepay ! rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue2 ! decodebin ! videoconvert ! glimagesink sync=false" />-->
 
         <com.thanics.andrew.halocontrol.StereoImageView
             android:id="@+id/stereoImageView2"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginBottom="0dp"
+            android:layout_marginEnd="0dp"
+            android:layout_marginStart="35dp"
+            android:layout_marginTop="60dp"
             android:layout_weight="1"
-            app:pipeline="udpsrc port=5002 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAET8sA8SJq\\\,KO4CXLA\\\=\&quot;, payload=(int)96, ssrc=(uint)2223015419, timestamp-offset=(uint)2228716040, seqnum-offset=(uint)8445, a-framerate=(string)40 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false"/>
+            app:pipeline="videotestsrc ! glimagesink"/>
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

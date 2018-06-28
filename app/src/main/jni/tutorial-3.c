@@ -233,7 +233,10 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
 /* Quit the main loop, remove the native thread and free resources */
 static void gst_native_finalize (JNIEnv* env, jobject thiz) {
   CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
-  if (!data) return;
+  if (!data) {
+      GST_DEBUG("gst not initialized");
+      return;
+  }
   GST_DEBUG ("Quitting main loop...");
   g_main_loop_quit (data->main_loop);
   GST_DEBUG ("Waiting for thread to finish...");

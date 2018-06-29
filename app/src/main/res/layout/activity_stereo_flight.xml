@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.thanics.andrew.halocontrol.StereoImageView
+        <android.view.SurfaceView
             android:id="@+id/stereoImageView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -22,11 +22,10 @@
             android:layout_marginEnd="35dp"
             android:layout_marginStart="0dp"
             android:layout_marginTop="60dp"
-            android:layout_weight="1"
-            app:pipeline="videotestsrc ! glimagesink"/>
+            android:layout_weight="1"/>
             <!--app:pipeline="udpsrc port=5001 ! application/x-rtp-stream, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\&quot;J2QAKawrQHAOfzwDxImo\\\,KO4CXLA\\\=\&quot;, payload=(int)96, a-framerate=(string)40 ! rtpstreamdepay ! rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue2 ! decodebin ! videoconvert ! glimagesink sync=false" />-->
 
-        <com.thanics.andrew.halocontrol.StereoImageView
+        <android.view.SurfaceView
             android:id="@+id/stereoImageView2"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -34,8 +33,7 @@
             android:layout_marginEnd="0dp"
             android:layout_marginStart="35dp"
             android:layout_marginTop="60dp"
-            android:layout_weight="1"
-            app:pipeline="videotestsrc ! glimagesink"/>
+            android:layout_weight="1"/>
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

@@ -7,6 +7,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <pthread.h>
+#include <malloc.h>
 
 GST_DEBUG_CATEGORY_STATIC (debug_category);
 #define GST_CAT_DEFAULT debug_category
@@ -32,17 +33,25 @@ typedef struct _CustomData {
   gboolean initialized;   /* To avoid informing the UI multiple times about the initialization */
   GstElement *video_sink; /* The video sink element which receives XOverlay commands */
   ANativeWindow *native_window; /* The Android native window where video will be rendered */
+
+//    GstElement *pipeline2;   /* The running pipeline */
+//    GMainContext *context2;  /* GLib context used to run the main loop */
+//    GMainLoop *main_loop2;   /* GLib main loop */
+//    gboolean initialized2;   /* To avoid informing the UI multiple times about the initialization */
+//    GstElement *video_sink2; /* The video sink element which receives XOverlay commands */
+//    ANativeWindow *native_window2; /* The Android native window where video will be rendered */
 } CustomData;
 
 /* These global variables cache values which are not changing during execution */
 static pthread_t gst_app_thread;
+static pthread_t gst_app_thread2;
 static pthread_key_t current_jni_env;
 static JavaVM *java_vm;
 static jfieldID custom_data_field_id;
+static jfieldID custom_data_field_id2;
 static jmethodID set_message_method_id;
 static jmethodID on_gstreamer_initialized_method_id;
-static jfieldID pipeline_field_id;
-const gchar *pipelineString;
+
 /*
  * Private methods
  */
@@ -157,14 +166,7 @@ static void *app_function (void *userdata) {
   g_main_context_push_thread_default(data->context);
 
   /* Build pipeline */
-  //data->pipeline = gst_parse_launch("videotestsrc ! warptv ! videoconvert ! autovideosink", &error);
-  //data->pipeline = gst_parse_launch("tcpserversrc port=5001 ! application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)H264,packetization-mode=(string)1,profile-level-id=(string)640028,payload=(int)96,ssrc=(uint)1748482228,timestamp-offset=(uint)1596184480,seqnum-offset=(uint)2320 ! rtph264depay ! openh264dec ! videoconvert ! autovideosink sync=false", &error);
-    //data->pipeline = gst_parse_launch("udpsrc port=5001 ! application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)H264,packetization-mode=(string)1,profile-level-id=(string)640028,payload=(int)96,ssrc=(uint)1748482228,timestamp-offset=(uint)1596184480,seqnum-offset=(uint)2320 ! rtph264depay ! openh264dec ! videoconvert ! autovideosink sync=false", &error);
-                                                                    //application/x-rtp\,\ media\=\(string\)video\,\ clock-rate\=\(int\)90000\,\ encoding-name\=\(string\)H264\,\ packetization-mode\=\(string\)1\,\ profile-level-id\=\(string\)640028\,\ sprop-parameter-sets\=\(string\)\"J2QAKKwrQDwBE/LAPEiagA\\\=\\\=\\\,KO4CXLA\\\=\"\,\ payload\=\(int\)96\,\ ssrc\=\(uint\)1748482228\,\ timestamp-offset\=\(uint\)1596184480\,\ seqnum-offset\=\(uint\)2320
-    //data->pipeline = gst_parse_launch("udpsrc port=5001 ! application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQDADb9QDxImo\\\,KO4CXLA\\\=\", payload=(int)96, ssrc=(uint)3175186120, timestamp-offset=(uint)4187265540, seqnum-offset=(uint)2103, a-framerate=(string)40 ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! decodebin ! video/x-raw, framerate=(fraction)40/1 ! videoconvert ! autovideosink sync=false", &error);
-    //data->pipeline = gst_parse_launch("tcpclientsrc host=192.168.42.42 port=5001 ! video/x-h264, stream-format=(string)avc, alignment=(string)au, codec_data=(buffer)01640028ffe1000f27640028ac2b402802efc900f1226a01000528ee01372c ! decodebin ! autovideosink", &error);
-    //data->pipeline = gst_parse_launch("videotestsrc ! autovideosink", &error);
-    data->pipeline = gst_parse_launch(pipelineString, &error);
+    data->pipeline = gst_parse_launch("videotestsrc ! glimagesink", &error);
     if (error) {
         gchar *message = g_strdup_printf("Unable to build pipeline: %s", error->message);
         g_clear_error (&error);
@@ -217,58 +219,55 @@ static void *app_function (void *userdata) {
 
 /* Instruct the native code to create its internal data structure, pipeline and thread */
 static void gst_native_init (JNIEnv* env, jobject thiz) {
-    jstring pipeline_jString = (*env)->GetObjectField(env, thiz, pipeline_field_id);
-    pipelineString = (*env)->GetStringUTFChars(env, pipeline_jString, 0);
 
   CustomData *data = g_new0 (CustomData, 1);
+    CustomData *data2 = malloc(sizeof(*data2));
+    *data2 = *data;
+    GST_DEBUG("Setting CD1");
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, data);
+    GST_DEBUG("Done CD1");
+    SET_CUSTOM_DATA (env, thiz, custom_data_field_id2, data2);
+    GST_DEBUG("Done CD2");
   GST_DEBUG_CATEGORY_INIT (debug_category, "tutorial-3", 0, "Android tutorial 3");
   gst_debug_set_threshold_for_name("tutorial-3", GST_LEVEL_DEBUG);
   GST_DEBUG ("Created CustomData at %p", data);
+    GST_DEBUG ("Created CustomData2 at %p", data2);
   data->app = (*env)->NewGlobalRef (env, thiz);
+    data2->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
   pthread_create (&gst_app_thread, NULL, &app_function, data);
+    pthread_create (&gst_app_thread2, NULL, &app_function, data2);
 }
 
 /* Quit the main loop, remove the native thread and free resources */
 static void gst_native_finalize (JNIEnv* env, jobject thiz) {
   CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
-  if (!data) {
+    CustomData *data2 = GET_CUSTOM_DATA (env, thiz, custom_data_field_id2);
+  if (!data || !data2) {
       GST_DEBUG("gst not initialized");
       return;
   }
   GST_DEBUG ("Quitting main loop...");
   g_main_loop_quit (data->main_loop);
+    g_main_loop_quit (data2->main_loop);
   GST_DEBUG ("Waiting for thread to finish...");
   pthread_join (gst_app_thread, NULL);
+    pthread_join (gst_app_thread2, NULL);
   GST_DEBUG ("Deleting GlobalRef for app object at %p", data->app);
   (*env)->DeleteGlobalRef (env, data->app);
+    (*env)->DeleteGlobalRef (env, data2->app);
   GST_DEBUG ("Freeing CustomData at %p", data);
   g_free (data);
+    g_free (data2);
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, NULL);
   GST_DEBUG ("Done finalizing");
-}
-
-/* Set pipeline to PLAYING state */
-static void gst_native_play (JNIEnv* env, jobject thiz) {
-  CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
-  if (!data) return;
-  GST_DEBUG ("Setting state to PLAYING");
-  gst_element_set_state (data->pipeline, GST_STATE_PLAYING);
-}
-
-/* Set pipeline to PAUSED state */
-static void gst_native_pause (JNIEnv* env, jobject thiz) {
-  CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
-  if (!data) return;
-  GST_DEBUG ("Setting state to PAUSED");
-  gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
 }
 
 /* Static class initializer: retrieve method and field IDs */
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
   custom_data_field_id = (*env)->GetFieldID (env, klass, "native_custom_data", "J");
-    pipeline_field_id = (*env)->GetFieldID (env, klass, "pipelineStr", "Ljava/lang/String;");
+    custom_data_field_id2 = (*env)->GetFieldID (env, klass, "native_custom_data2", "J");
+    //pipeline_field_id = (*env)->GetFieldID (env, klass, "pipelineStr", "Ljava/lang/String;");
 
 
   //set_message_method_id = (*env)->GetMethodID (env, klass, "setMessage", "(Ljava/lang/String;)V");
@@ -282,6 +281,28 @@ static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
     return JNI_FALSE;
   }
   return JNI_TRUE;
+}
+
+//////////////////////////////////
+//////
+//////      VERSION ONE
+//////
+//////////////////////////////////
+
+/* Set pipeline to PLAYING state */
+static void gst_native_play (JNIEnv* env, jobject thiz) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
+    if (!data) return;
+    GST_DEBUG ("Setting state to PLAYING");
+    gst_element_set_state (data->pipeline, GST_STATE_PLAYING);
+}
+
+/* Set pipeline to PAUSED state */
+static void gst_native_pause (JNIEnv* env, jobject thiz) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
+    if (!data) return;
+    GST_DEBUG ("Setting state to PAUSED");
+    gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
 }
 
 static void gst_native_surface_init (JNIEnv *env, jobject thiz, jobject surface) {
@@ -324,6 +345,68 @@ static void gst_native_surface_finalize (JNIEnv *env, jobject thiz) {
   data->initialized = FALSE;
 }
 
+//////////////////////////////////
+//////
+//////      VERSION TWO
+//////
+//////////////////////////////////
+
+/* Set pipeline to PLAYING state */
+static void gst_native_play2 (JNIEnv* env, jobject thiz) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id2);
+    if (!data) return;
+    GST_DEBUG ("Setting state to PLAYING");
+    gst_element_set_state (data->pipeline, GST_STATE_PLAYING);
+}
+
+/* Set pipeline to PAUSED state */
+static void gst_native_pause2 (JNIEnv* env, jobject thiz) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id2);
+    if (!data) return;
+    GST_DEBUG ("Setting state to PAUSED");
+    gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
+}
+
+static void gst_native_surface_init2 (JNIEnv *env, jobject thiz, jobject surface) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id2);
+    if (!data) return;
+    ANativeWindow *new_native_window = ANativeWindow_fromSurface(env, surface);
+    GST_DEBUG ("Received surface %p (native window %p)", surface, new_native_window);
+
+    if (data->native_window) {
+        ANativeWindow_release (data->native_window);
+        if (data->native_window == new_native_window) {
+            GST_DEBUG ("New native window is the same as the previous one %p", data->native_window);
+            if (data->video_sink) {
+                gst_video_overlay_expose(GST_VIDEO_OVERLAY (data->video_sink));
+                gst_video_overlay_expose(GST_VIDEO_OVERLAY (data->video_sink));
+            }
+            return;
+        } else {
+            GST_DEBUG ("Released previous native window %p", data->native_window);
+            data->initialized = FALSE;
+        }
+    }
+    data->native_window = new_native_window;
+
+    check_initialization_complete (data);
+}
+
+static void gst_native_surface_finalize2 (JNIEnv *env, jobject thiz) {
+    CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id2);
+    if (!data) return;
+    GST_DEBUG ("Releasing Native Window %p", data->native_window);
+
+    if (data->video_sink) {
+        gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (data->video_sink), (guintptr)NULL);
+        gst_element_set_state (data->pipeline, GST_STATE_READY);
+    }
+
+    ANativeWindow_release (data->native_window);
+    data->native_window = NULL;
+    data->initialized = FALSE;
+}
+
 /* List of implemented native methods */
 static JNINativeMethod native_methods[] = {
   { "nativeInit", "()V", (void *) gst_native_init},
@@ -332,11 +415,16 @@ static JNINativeMethod native_methods[] = {
   { "nativePause", "()V", (void *) gst_native_pause},
   { "nativeSurfaceInit", "(Ljava/lang/Object;)V", (void *) gst_native_surface_init},
   { "nativeSurfaceFinalize", "()V", (void *) gst_native_surface_finalize},
+  { "nativePlay2", "()V", (void *) gst_native_play2},
+  { "nativePause2", "()V", (void *) gst_native_pause2},
+  { "nativeSurfaceInit2", "(Ljava/lang/Object;)V", (void *) gst_native_surface_init2},
+  { "nativeSurfaceFinalize2", "()V", (void *) gst_native_surface_finalize2},
   { "nativeClassInit", "()Z", (void *) gst_native_class_init}
 };
 
 /* Library initializer */
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    GST_DEBUG("Starting JNI");
   JNIEnv *env = NULL;
 
   java_vm = vm;
@@ -345,9 +433,10 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print (ANDROID_LOG_ERROR, "tutorial-3", "Could not retrieve JNIEnv");
     return 0;
   }
-  //jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoFlightActivity");
-    jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoImageView");
+  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoFlightActivity");
+  //  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoImageView");
   (*env)->RegisterNatives (env, klass, native_methods, G_N_ELEMENTS(native_methods));
+    GST_DEBUG("Done registering methods");
 
   pthread_key_create (&current_jni_env, detach_current_thread);
 

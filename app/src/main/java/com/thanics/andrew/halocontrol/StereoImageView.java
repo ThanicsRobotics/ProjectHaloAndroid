@@ -37,7 +37,7 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
     public StereoImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        Log.i("Halo", "this is constructor");
+        Log.i("seq", "constructor");
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs,
@@ -53,17 +53,12 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     private void onGStreamerInitialized () {
-        Log.d("Halo", "gst init");
+        Log.d("seq", "gst init");
         nativePlay();
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(GST_TAG, "Surface created: " + holder.getSurface());
-        Log.d("Halo", "stereo image loaded");
-
-        System.loadLibrary("gstreamer_android");
-        System.loadLibrary("tutorial-3");
-        nativeClassInit();
         
         // Initialize GStreamer and warn if it fails
         try {
@@ -72,6 +67,7 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
             Toast.makeText(this.getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             return;
         }
+
         nativeInit();
     }
 
@@ -87,12 +83,11 @@ public class StereoImageView extends SurfaceView implements SurfaceHolder.Callba
         Log.d(GST_TAG, "Surface destroyed");
         nativePause();
         nativeSurfaceFinalize();
-        nativeFinalize();
+
     }
 
-//    static {
-//        System.loadLibrary("gstreamer_android");
-//        System.loadLibrary("tutorial-3");
-//        nativeClassInit();
-//    }
+    static {
+        Log.i("seq", "load");
+        //nativeClassInit();
+    }
 }

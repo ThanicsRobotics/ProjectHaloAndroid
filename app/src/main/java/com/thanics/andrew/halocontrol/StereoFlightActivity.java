@@ -29,6 +29,8 @@ public class StereoFlightActivity extends AppCompatActivity {
     private long native_custom_data;      // Native code will use this to keep private data
     private long native_custom_data2;      // Native code will use this to keep private data
 
+    private int streamMode; // 0 is 3D, 1 is 2D
+
     private static final String GST_TAG = "Gstreamer";
 
     // Called when the activity is first created.
@@ -73,6 +75,7 @@ public class StereoFlightActivity extends AppCompatActivity {
                 Log.d(GST_TAG, "Surface changed to format " + format + " width "
                         + width + " height " + height);
                 nativeSurfaceInit (surfaceHolder.getSurface());
+                nativePlay();
             }
 
             @Override
@@ -95,6 +98,7 @@ public class StereoFlightActivity extends AppCompatActivity {
                 Log.d(GST_TAG, "Surface changed to format " + format + " width "
                         + width + " height " + height);
                 nativeSurfaceInit2 (surfaceHolder.getSurface());
+                nativePlay2();
             }
 
             @Override
@@ -110,8 +114,8 @@ public class StereoFlightActivity extends AppCompatActivity {
 
     private void onGStreamerInitialized () {
         Log.d("seq", "gst init");
-        nativePlay();
-        nativePlay2();
+//        nativePlay();
+//        nativePlay2();
     }
 
     protected void onSaveInstanceState (Bundle outState) {

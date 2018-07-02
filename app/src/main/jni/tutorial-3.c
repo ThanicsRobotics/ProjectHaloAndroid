@@ -28,28 +28,26 @@ GST_DEBUG_CATEGORY_STATIC (debug_category);
 typedef struct _CustomData {
   jobject app;            /* Application instance, used to call its methods. A global reference is kept. */
   GstElement *pipeline;   /* The running pipeline */
+    const char* pipelineStr;
+    int streamMode;
   GMainContext *context;  /* GLib context used to run the main loop */
   GMainLoop *main_loop;   /* GLib main loop */
   gboolean initialized;   /* To avoid informing the UI multiple times about the initialization */
   GstElement *video_sink; /* The video sink element which receives XOverlay commands */
   ANativeWindow *native_window; /* The Android native window where video will be rendered */
-
-//    GstElement *pipeline2;   /* The running pipeline */
-//    GMainContext *context2;  /* GLib context used to run the main loop */
-//    GMainLoop *main_loop2;   /* GLib main loop */
-//    gboolean initialized2;   /* To avoid informing the UI multiple times about the initialization */
-//    GstElement *video_sink2; /* The video sink element which receives XOverlay commands */
-//    ANativeWindow *native_window2; /* The Android native window where video will be rendered */
 } CustomData;
 
 /* These global variables cache values which are not changing during execution */
 static pthread_t gst_app_thread;
 static pthread_t gst_app_thread2;
+
 static pthread_key_t current_jni_env;
 static JavaVM *java_vm;
+
 static jfieldID custom_data_field_id;
 static jfieldID custom_data_field_id2;
-static jmethodID set_message_method_id;
+static jfieldID stream_mode_field_id;
+
 static jmethodID on_gstreamer_initialized_method_id;
 
 /*
@@ -166,7 +164,7 @@ static void *app_function (void *userdata) {
   g_main_context_push_thread_default(data->context);
 
   /* Build pipeline */
-    data->pipeline = gst_parse_launch("videotestsrc ! glimagesink", &error);
+    data->pipeline = gst_parse_launch(data->pipelineStr, &error);
     if (error) {
         gchar *message = g_strdup_printf("Unable to build pipeline: %s", error->message);
         g_clear_error (&error);
@@ -223,11 +221,13 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
   CustomData *data = g_new0 (CustomData, 1);
     CustomData *data2 = malloc(sizeof(*data2));
     *data2 = *data;
-    GST_DEBUG("Setting CD1");
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, data);
-    GST_DEBUG("Done CD1");
     SET_CUSTOM_DATA (env, thiz, custom_data_field_id2, data2);
-    GST_DEBUG("Done CD2");
+
+    int streamMode = (*env)->GetIntField(env, thiz, stream_mode_field_id);
+    data->streamMode = streamMode;
+    data2->streamMode = streamMode;
+
   GST_DEBUG_CATEGORY_INIT (debug_category, "tutorial-3", 0, "Android tutorial 3");
   gst_debug_set_threshold_for_name("tutorial-3", GST_LEVEL_DEBUG);
   GST_DEBUG ("Created CustomData at %p", data);
@@ -235,6 +235,31 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
   data->app = (*env)->NewGlobalRef (env, thiz);
     data2->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
+
+    data->pipelineStr = "udpsrc port=5002 ! application/x-rtp, media=(string)video, "
+            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
+            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
+            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
+            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
+            "decodebin ! videoconvert ! glimagesink sync=false";
+
+    // For splitting stream to two surfaces
+//    data->pipelineStr = "udpsrc port=5002 ! application/x-rtp, media=(string)video, "
+//            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
+//            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
+//            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
+//            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
+//            "decodebin ! tee name=t t. ! queue ! videoconvert ! glimagesink name=sink1 sync=false t. ! "
+//            "queue ! videoconvert ! glimagesink name=sink2 sync=false";
+
+    data2->pipelineStr = "udpsrc port=5003 ! application/x-rtp, media=(string)video, "
+            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
+            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
+            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
+            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
+            "decodebin ! videoconvert ! glimagesink sync=false";
+//    data->pipelineStr = "videotestsrc ! glimagesink";
+//    data2->pipelineStr = "videotestsrc ! glimagesink";
   pthread_create (&gst_app_thread, NULL, &app_function, data);
     pthread_create (&gst_app_thread2, NULL, &app_function, data2);
 }
@@ -267,10 +292,8 @@ static void gst_native_finalize (JNIEnv* env, jobject thiz) {
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
   custom_data_field_id = (*env)->GetFieldID (env, klass, "native_custom_data", "J");
     custom_data_field_id2 = (*env)->GetFieldID (env, klass, "native_custom_data2", "J");
-    //pipeline_field_id = (*env)->GetFieldID (env, klass, "pipelineStr", "Ljava/lang/String;");
+    stream_mode_field_id = (*env)->GetFieldID (env, klass, "streamMode", "I");
 
-
-  //set_message_method_id = (*env)->GetMethodID (env, klass, "setMessage", "(Ljava/lang/String;)V");
   on_gstreamer_initialized_method_id = (*env)->GetMethodID (env, klass, "onGStreamerInitialized", "()V");
 
   if (!custom_data_field_id || !on_gstreamer_initialized_method_id) {
@@ -285,7 +308,7 @@ static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
 
 //////////////////////////////////
 //////
-//////      VERSION ONE
+//////      SURFACE ONE
 //////
 //////////////////////////////////
 
@@ -347,7 +370,7 @@ static void gst_native_surface_finalize (JNIEnv *env, jobject thiz) {
 
 //////////////////////////////////
 //////
-//////      VERSION TWO
+//////      SURFACE TWO
 //////
 //////////////////////////////////
 

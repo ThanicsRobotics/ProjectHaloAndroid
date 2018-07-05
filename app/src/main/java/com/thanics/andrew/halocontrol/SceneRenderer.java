@@ -37,11 +37,10 @@ import android.view.Surface;
 import android.view.ViewGroup;
 
 import com.google.vr.sdk.controller.Orientation;
-import com.google.vr.sdk.samples.video360.VideoUiView;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.vr.sdk.samples.video360.rendering.Utils.checkGlError;
+import static com.thanics.andrew.halocontrol.Utils.checkGlError;
 
 /**
  * Controls and renders the GL Scene.
@@ -333,7 +332,7 @@ public final class SceneRenderer {
           @Override
           public void run() {
             if (videoUiView.getAlpha() == 0) {
-              videoUiView.animate().alpha(1).start();
+              videoUiView.animate().alpha(0.7f).start();
             } else {
               videoUiView.animate().alpha(0).start();
             }

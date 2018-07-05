@@ -236,12 +236,12 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
     data2->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
 
-    data->pipelineStr = "udpsrc port=5002 ! application/x-rtp, media=(string)video, "
-            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
-            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
-            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
-            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
-            "decodebin ! videoconvert ! glimagesink sync=false";
+//    data->pipelineStr = "udpsrc port=5002 ! application/x-rtp, media=(string)video, "
+//            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
+//            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
+//            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
+//            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
+//            "decodebin ! videoconvert ! glimagesink sync=false";
 
     // For splitting stream to two surfaces
 //    data->pipelineStr = "udpsrc port=5002 ! application/x-rtp, media=(string)video, "
@@ -252,14 +252,14 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
 //            "decodebin ! tee name=t t. ! queue ! videoconvert ! glimagesink name=sink1 sync=false t. ! "
 //            "queue ! videoconvert ! glimagesink name=sink2 sync=false";
 
-    data2->pipelineStr = "udpsrc port=5003 ! application/x-rtp, media=(string)video, "
-            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
-            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
-            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
-            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
-            "decodebin ! videoconvert ! glimagesink sync=false";
-//    data->pipelineStr = "videotestsrc ! glimagesink";
-//    data2->pipelineStr = "videotestsrc ! glimagesink";
+//    data2->pipelineStr = "udpsrc port=5003 ! application/x-rtp, media=(string)video, "
+//            "clock-rate=(int)90000, encoding-name=(string)H264, packetization-mode=(string)1, "
+//            "profile-level-id=(string)640029, sprop-parameter-sets=(string)\"J2QAKawrQHAOfzwDxImo\\\,"
+//            "KO4CXLA\\\=\", payload=(int)96, a-framerate=(string)40 ! "
+//            "rtpjitterbuffer ! rtph264depay ! video/x-h264, framerate=(fraction)40/1 ! queue ! "
+//            "decodebin ! videoconvert ! glimagesink sync=false";
+    data->pipelineStr = "videotestsrc ! glimagesink";
+    data2->pipelineStr = "videotestsrc ! glimagesink";
   pthread_create (&gst_app_thread, NULL, &app_function, data);
     pthread_create (&gst_app_thread2, NULL, &app_function, data2);
 }
@@ -456,7 +456,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print (ANDROID_LOG_ERROR, "tutorial-3", "Could not retrieve JNIEnv");
     return 0;
   }
-  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoFlightActivity");
+  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/VrStereoActivity");
   //  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoImageView");
   (*env)->RegisterNatives (env, klass, native_methods, G_N_ELEMENTS(native_methods));
     GST_DEBUG("Done registering methods");

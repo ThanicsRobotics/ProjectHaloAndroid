@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.thanics.andrew.halocontrol.GstVrSurfaceView
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="400dp">
+
+    <SurfaceView
+        android:id="@+id/gst_vr_surface_view"
+        android:backgroundTint="#f00"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        />
+
+</com.thanics.andrew.halocontrol.GstVrSurfaceView>

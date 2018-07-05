@@ -26,14 +26,17 @@ import android.media.MediaPlayer;
 import android.support.annotation.AnyThread;
 import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -46,9 +49,8 @@ import android.widget.TextView;
  * displayed in VR. It also receives events from the Daydream Controller and forwards them to its
  * child views.
  */
-public class VideoUiView extends LinearLayout {
+public class VideoUiView extends ConstraintLayout {
   // These UI elements are only useful when the app is displaying a video.
-  private SeekBar seekBar;
   private TextView statusText;
   private final UiUpdater uiUpdater = new UiUpdater();
 
@@ -153,38 +155,41 @@ public class VideoUiView extends LinearLayout {
   public void onFinishInflate() {
     super.onFinishInflate();
 
-    final ImageButton playPauseToggle = (ImageButton) findViewById(R.id.play_pause_toggle);
-    playPauseToggle.setOnClickListener(
-        new OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            if (mediaPlayer == null) {
-              return;
-            }
+//    final ImageButton playPauseToggle = (ImageButton) findViewById(R.id.play_pause_toggle);
+//    playPauseToggle.setOnClickListener(
+//        new OnClickListener() {
+//          @Override
+//          public void onClick(View v) {
+//            if (mediaPlayer == null) {
+//              return;
+//            }
+//
+//            if (mediaPlayer.isPlaying()) {
+//              mediaPlayer.pause();
+//              playPauseToggle.setBackgroundResource(R.drawable.play_button);
+//              playPauseToggle.setContentDescription(getResources().getString(R.string.play_label));
+//            } else {
+//              mediaPlayer.start();
+//              playPauseToggle.setBackgroundResource(R.drawable.pause_button);
+//              playPauseToggle.setContentDescription(getResources().getString(R.string.pause_label));
+//            }
+//          }
+//        });
 
-            if (mediaPlayer.isPlaying()) {
-              mediaPlayer.pause();
-              playPauseToggle.setBackgroundResource(R.drawable.play_button);
-              playPauseToggle.setContentDescription(getResources().getString(R.string.play_label));
-            } else {
-              mediaPlayer.start();
-              playPauseToggle.setBackgroundResource(R.drawable.pause_button);
-              playPauseToggle.setContentDescription(getResources().getString(R.string.pause_label));
-            }
-          }
-        });
-
-    seekBar = (SeekBar) findViewById(R.id.seek_bar);
-    seekBar.setOnSeekBarChangeListener(new SeekBarListener());
-
-    statusText = (TextView) findViewById(R.id.status_text);
+//    statusText = findViewById(R.id.status_text);
   }
 
   /** Sets the OnClickListener used to switch Activities. */
   @MainThread
   public void setVrIconClickListener(OnClickListener listener) {
-    ImageButton vrIcon = (ImageButton) findViewById(R.id.enter_exit_vr);
+    ImageButton vrIcon = findViewById(R.id.enter_exit_vr);
     vrIcon.setOnClickListener(listener);
+  }
+
+  @MainThread
+  public void setStereoStreamClickListener(OnClickListener listener) {
+    Button stereoButton = findViewById(R.id.stereoButton);
+    stereoButton.setOnClickListener(listener);
   }
 
   /**
@@ -243,16 +248,14 @@ public class VideoUiView extends LinearLayout {
 
         if (videoDurationMs == 0) {
           videoDurationMs = mediaPlayer.getDuration();
-          seekBar.setMax(videoDurationMs);
         }
         int positionMs = mediaPlayer.getCurrentPosition();
-        seekBar.setProgress(positionMs);
 
-        StringBuilder status = new StringBuilder();
-        status.append(String.format("%.2f", positionMs / 1000f));
-        status.append(" / ");
-        status.append(videoDurationMs / 1000);
-        statusText.setText(status.toString());
+//        StringBuilder status = new StringBuilder();
+//        status.append(String.format("%.2f", positionMs / 1000f));
+//        status.append(" / ");
+//        status.append(videoDurationMs / 1000);
+//        statusText.setText(status.toString());
 
         if (canvasQuad != null) {
           // When in VR, we will need to manually invalidate this View.
@@ -266,21 +269,5 @@ public class VideoUiView extends LinearLayout {
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
       post(uiThreadUpdater);
     }
-  }
-
-  /** Handles the user seeking to a new position in the video. */
-  private final class SeekBarListener implements SeekBar.OnSeekBarChangeListener {
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-      if (fromUser && mediaPlayer != null) {
-        mediaPlayer.seekTo(progress);
-      } // else this was from the ActivityEventHandler.onNewFrame()'s seekBar.setProgress update.
-    }
-
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {}
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {}
   }
 }

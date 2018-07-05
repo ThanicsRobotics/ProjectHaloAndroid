@@ -23,7 +23,7 @@ import com.google.vr.sdk.base.Eye;
 
 import java.nio.FloatBuffer;
 
-import static com.google.vr.sdk.samples.video360.rendering.Utils.checkGlError;
+import static com.thanics.andrew.halocontrol.Utils.checkGlError;
 
 /**
  * Utility class to generate & render spherical meshes for video or images. Use the static creation

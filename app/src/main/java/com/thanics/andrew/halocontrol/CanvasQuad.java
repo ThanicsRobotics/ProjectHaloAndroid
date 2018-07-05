@@ -30,7 +30,7 @@ import com.google.vr.sdk.controller.Orientation;
 import java.nio.FloatBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.vr.sdk.samples.video360.rendering.Utils.checkGlError;
+import static com.thanics.andrew.halocontrol.Utils.checkGlError;
 
 /**
  * Renders a floating, textured, translucent quad in VR at a hardcoded distance.
@@ -46,7 +46,7 @@ public class CanvasQuad {
   // The size of the quad is hardcoded for this sample and the quad doesn't have a model matrix so
   // these dimensions are used by translateClick() for touch interaction.
   private static final float WIDTH = 1f;
-  private static final float HEIGHT = 1 / 8f;
+  private static final float HEIGHT = 1 / 2f;
   private static final float DISTANCE = 1f;
   // The number of pixels in this quad affect how Android positions Views in it. VideoUiView in VR
   // will be 1024 x 128 px in size which is similar to its 2D size. For Views that only have VR

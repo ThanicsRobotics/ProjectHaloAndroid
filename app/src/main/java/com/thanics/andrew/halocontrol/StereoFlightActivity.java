@@ -63,8 +63,8 @@ public class StereoFlightActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_stereo_flight);
 
-        SurfaceView siv = this.findViewById(R.id.stereoImageView);
-        siv.getHolder().addCallback(new SurfaceHolder.Callback() {
+        SurfaceView sv = this.findViewById(R.id.stereoImageView);
+        sv.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
                 Log.d(GST_TAG, "Surface created: " + surfaceHolder.getSurface());

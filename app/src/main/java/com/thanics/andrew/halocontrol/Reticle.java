@@ -23,7 +23,7 @@ import com.google.vr.sdk.controller.Orientation;
 
 import java.nio.FloatBuffer;
 
-import static com.google.vr.sdk.samples.video360.rendering.Utils.checkGlError;
+import static com.thanics.andrew.halocontrol.Utils.checkGlError;
 
 /**
  * Renders a reticle in VR for the Daydream Controller.

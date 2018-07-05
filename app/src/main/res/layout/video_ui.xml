@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI to control video playback. See the class's javadoc for more info. -->
+<com.thanics.andrew.halocontrol.VideoUiView
+  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/video_ui_view"
+  android:orientation="horizontal"
+  android:layout_width="match_parent"
+  android:layout_height="200dp"
+  android:background="#000"
+  android:alpha=".7">
+
+  <TextView
+      android:id="@+id/title_text"
+      android:layout_width="match_parent"
+      android:gravity="center_horizontal"
+      android:layout_height="wrap_content"
+      app:layout_constraintTop_toTopOf="parent"
+      android:paddingTop="8dp"
+      android:text="Welcome to HaloVR"
+
+      android:textColor="#bbb"
+      android:textSize="30sp" />
+
+  <TextView
+      android:text="Exit VR"
+      android:textColor="#bbb"
+      android:textSize="20sp"
+      app:layout_constraintEnd_toStartOf="@id/enter_exit_vr"
+      app:layout_constraintBottom_toBottomOf="@id/enter_exit_vr"
+      app:layout_constraintTop_toTopOf="@id/enter_exit_vr"
+
+      android:layout_marginEnd="8dp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" />
+
+  <Button
+      android:id="@+id/stereoButton"
+      android:text="Start Stereo Streaming"
+      android:textSize="20sp"
+      app:layout_constraintTop_toBottomOf="@id/title_text"
+      android:padding="15dp"
+      android:layout_marginTop="20dp"
+      app:layout_constraintStart_toStartOf="parent"
+      android:layout_marginStart="30dp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" />
+
+  <ImageButton
+      android:id="@+id/enter_exit_vr"
+      android:layout_width="48dp"
+      android:layout_height="48dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginEnd="8dp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      android:layout_marginStart="5dp"
+      android:background="@drawable/enter_vr"
+      android:contentDescription="@string/enter_vr_label" />
+
+
+
+</com.thanics.andrew.halocontrol.VideoUiView>

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.thanics.andrew.halocontrol;
+package com.thanics.andrew.halocontrol.rendering;
 
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.google.vr.sdk.base.Eye;
+import com.thanics.andrew.halocontrol.Utils;
 
 import java.nio.FloatBuffer;
 
@@ -31,18 +32,17 @@ import static com.thanics.andrew.halocontrol.Utils.checkGlError;
  * Use glDraw method to render it.
  */
 public final class Mesh {
-  /** Standard media where a single camera frame takes up the entire media frame. */
-  public static final int MEDIA_MONOSCOPIC = 0;
-  /**
-   * Stereo media where the left & right halves of the frame are rendered for the left & right eyes,
-   * respectively. If the stereo media is rendered in a non-VR display, only the left half is used.
-   */
-  public static final int MEDIA_STEREO_LEFT_RIGHT = 1;
-  /**
-   * Stereo media where the top & bottom halves of the frame are rendered for the left & right eyes,
-   * respectively. If the stereo media is rendered in a non-VR display, only the top half is used.
-   */
-  public static final int MEDIA_STEREO_TOP_BOTTOM = 2;
+
+  /** A spherical mesh for video should be large enough that there are no stereo artifacts. */
+  private static final int SPHERE_RADIUS_METERS = 50;
+
+  /** These should be configured based on the video type. But this sample assumes 360 video. */
+  private static final int DEFAULT_SPHERE_VERTICAL_DEGREES = 180;
+  private static final int DEFAULT_SPHERE_HORIZONTAL_DEGREES = 360;
+
+  /** The 360 x 180 sphere has 15 degree quads. Increase these if lines in your video look wavy. */
+  private static final int DEFAULT_SPHERE_ROWS = 12;
+  private static final int DEFAULT_SPHERE_COLUMNS = 24;
 
   // Basic vertex & fragment shaders to render a mesh with 3D position & 2D texture data.
   private static final String[] VERTEX_SHADER_CODE =
@@ -79,7 +79,7 @@ public final class Mesh {
   // scene, only the left eye's UV coordinates are used.
   // For mono media, the UV coordinates are duplicated in each. For stereo media, the UV coords
   // point to the appropriate part of the source media.
-  private static final int TEXTURE_COORDS_PER_VERTEX = 2 * 2;
+  private static final int TEXTURE_COORDS_PER_VERTEX = 2;
   // COORDS_PER_VERTEX
   private static final int CPV = POSITION_COORDS_PER_VERTEX + TEXTURE_COORDS_PER_VERTEX;
   // Data is tightly packed. Each vertex is [x, y, z, u_left, v_left, u_right, v_right].
@@ -110,7 +110,6 @@ public final class Mesh {
    *    (0, 180].
    * @param horizontalFovDegrees Total longitudinal degrees that are covered by the sphere.Must be
    *    in (0, 360].
-   * @param mediaFormat A MEDIA_* value.
    * @return Unintialized Mesh.
    */
   public static Mesh createUvSphere(
@@ -118,8 +117,7 @@ public final class Mesh {
       int latitudes,
       int longitudes,
       float verticalFovDegrees,
-      float horizontalFovDegrees,
-      int mediaFormat) {
+      float horizontalFovDegrees) {
     if (radius <= 0
         || latitudes < 1 || longitudes < 1
         || verticalFovDegrees <= 0 || verticalFovDegrees > 180
@@ -155,33 +153,19 @@ public final class Mesh {
           float theta = quadWidthRads * i + (float) Math.PI - horizontalFovRads / 2;
 
           // Set vertex position data as Cartesian coordinates.
-          vertexData[CPV * v + 0] = -(float) (radius * Math.sin(theta) * Math.cos(phi));
+          vertexData[CPV * v] = -(float) (radius * Math.sin(theta) * Math.cos(phi));
           vertexData[CPV * v + 1] =  (float) (radius * Math.sin(phi));
           vertexData[CPV * v + 2] =  (float) (radius * Math.cos(theta) * Math.cos(phi));
 
           // Set vertex texture.x data.
-          if (mediaFormat == MEDIA_STEREO_LEFT_RIGHT) {
-            // For left-right media, each eye's x coordinate points to the left or right half of the
-            // texture.
-            vertexData[CPV * v + 3] = (i * quadWidthRads / horizontalFovRads) / 2;
-            vertexData[CPV * v + 5] = (i * quadWidthRads / horizontalFovRads) / 2 + .5f;
-          } else {
-            // For top-bottom or monoscopic media, the eye's x spans the full width of the texture.
-            vertexData[CPV * v + 3] = i * quadWidthRads / horizontalFovRads;
-            vertexData[CPV * v + 5] = i * quadWidthRads / horizontalFovRads;
-          }
+          // For top-bottom or monoscopic media, the eye's x spans the full width of the texture.
+          vertexData[CPV * v + 3] = i * quadWidthRads / horizontalFovRads;
+          //vertexData[CPV * v + 5] = i * quadWidthRads / horizontalFovRads;
 
           // Set vertex texture.y data. The "1 - ..." is due to Canvas vs GL coords.
-          if (mediaFormat == MEDIA_STEREO_TOP_BOTTOM) {
-            // For top-bottom media, each eye's y coordinate points to the top or bottom half of the
-            // texture.
-            vertexData[CPV * v + 4] = 1 - (((j + k) * quadHeightRads / verticalFovRads) / 2 + .5f);
-            vertexData[CPV * v + 6] = 1 - ((j + k) * quadHeightRads / verticalFovRads) / 2;
-          } else {
-            // For left-right or monoscopic media, the eye's y spans the full height of the texture.
-            vertexData[CPV * v + 4] = 1 - (j + k) * quadHeightRads / verticalFovRads;
-            vertexData[CPV * v + 6] = 1 - (j + k) * quadHeightRads / verticalFovRads;
-          }
+          // For left-right or monoscopic media, the eye's y spans the full height of the texture.
+          vertexData[CPV * v + 4] = 1 - (j + k) * quadHeightRads / verticalFovRads;
+          //vertexData[CPV * v + 6] = 1 - (j + k) * quadHeightRads / verticalFovRads;
           v++;
 
           // Break up the triangle strip with degenerate vertices by copying first and last points.
@@ -198,6 +182,12 @@ public final class Mesh {
     return new Mesh(vertexData);
   }
 
+  public static Mesh createUvSphere() {
+    return Mesh.createUvSphere(
+            SPHERE_RADIUS_METERS, DEFAULT_SPHERE_ROWS, DEFAULT_SPHERE_COLUMNS,
+            DEFAULT_SPHERE_VERTICAL_DEGREES, DEFAULT_SPHERE_HORIZONTAL_DEGREES);
+  }
+
   /** Used by static constructors. */
   private Mesh(float[] vertexData) {
     vertices = vertexData;
@@ -209,7 +199,7 @@ public final class Mesh {
    *
    * @param textureId GL_TEXTURE_EXTERNAL_OES used for this mesh.
    */
-  /* package */ void glInit(int textureId) {
+  public void glInit(int textureId) {
     this.textureId = textureId;
 
     program = Utils.compileProgram(VERTEX_SHADER_CODE, FRAGMENT_SHADER_CODE);
@@ -226,7 +216,7 @@ public final class Mesh {
    * @param mvpMatrix The Model View Projection matrix.
    * @param eyeType An {@link Eye.Type} value.
    */
-  /* package */ void glDraw(float[] mvpMatrix, int eyeType) {
+  public void glDraw(float[] mvpMatrix, int eyeType) {
     // Configure shader.
     GLES20.glUseProgram(program);
     checkGlError();
@@ -253,8 +243,9 @@ public final class Mesh {
     checkGlError();
 
     // Load texture data. Eye.Type.RIGHT uses the left eye's data.
-    int textureOffset =
-        (eyeType == Eye.Type.RIGHT) ? POSITION_COORDS_PER_VERTEX + 2 : POSITION_COORDS_PER_VERTEX;
+    int textureOffset = POSITION_COORDS_PER_VERTEX;
+    //int textureOffset =
+    //    (eyeType == Eye.Type.RIGHT) ? POSITION_COORDS_PER_VERTEX + 2 : POSITION_COORDS_PER_VERTEX;
     vertexBuffer.position(textureOffset);
     GLES20.glVertexAttribPointer(
         texCoordsHandle,
@@ -274,7 +265,7 @@ public final class Mesh {
   }
 
   /** Cleans up the GL resources. */
-  /* package */ void glShutdown() {
+  public void glShutdown() {
     if (program != 0) {
       GLES20.glDeleteProgram(program);
       GLES20.glDeleteTextures(1, new int[]{textureId}, 0);

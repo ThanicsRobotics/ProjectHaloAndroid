@@ -456,7 +456,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print (ANDROID_LOG_ERROR, "tutorial-3", "Could not retrieve JNIEnv");
     return 0;
   }
-  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/VrStereoActivity");
+  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/Stereo3DFlightScene/Stereo3DFlightSceneRenderer");
   //  jclass klass = (*env)->FindClass (env, "com/thanics/andrew/halocontrol/StereoImageView");
   (*env)->RegisterNatives (env, klass, native_methods, G_N_ELEMENTS(native_methods));
     GST_DEBUG("Done registering methods");

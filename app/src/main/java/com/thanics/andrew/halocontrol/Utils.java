@@ -16,8 +16,10 @@
 
 package com.thanics.andrew.halocontrol;
 
+import android.graphics.Bitmap;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -25,6 +27,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+
+import javax.microedition.khronos.opengles.GL10Ext;
+import javax.microedition.khronos.opengles.GL11Ext;
 
 import static android.opengl.GLU.gluErrorString;
 
@@ -115,18 +120,19 @@ public class Utils {
    * Creates a GL_TEXTURE_EXTERNAL_OES with default configuration of GL_LINEAR filtering and
    * GL_CLAMP_TO_EDGE wrapping.
    */
+
   public static int glCreateExternalTexture() {
     int[] texId = new int[1];
     GLES20.glGenTextures(1, IntBuffer.wrap(texId));
     GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texId[0]);
     GLES20.glTexParameteri(
-        GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
     GLES20.glTexParameteri(
-        GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
     GLES20.glTexParameteri(
-        GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
     GLES20.glTexParameteri(
-        GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     checkGlError();
     return texId[0];
   }

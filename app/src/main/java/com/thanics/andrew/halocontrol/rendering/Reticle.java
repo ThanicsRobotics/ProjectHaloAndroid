@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.thanics.andrew.halocontrol;
+package com.thanics.andrew.halocontrol.rendering;
 
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 import com.google.vr.sdk.controller.Orientation;
+import com.thanics.andrew.halocontrol.Utils;
 
 import java.nio.FloatBuffer;
 
@@ -31,7 +32,7 @@ import static com.thanics.andrew.halocontrol.Utils.checkGlError;
  * <p>This is a minimal example that renders a circle at 1 meter from the user based on the rotation
  * of the controller.
  */
-final class Reticle {
+public final class Reticle {
   // The reticle quad is 2 * SIZE units.
   private static final float SIZE = .01f;
   private static final float DISTANCE = 1;

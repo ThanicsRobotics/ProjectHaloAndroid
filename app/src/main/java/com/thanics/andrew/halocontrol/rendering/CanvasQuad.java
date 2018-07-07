@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thanics.andrew.halocontrol;
+package com.thanics.andrew.halocontrol.rendering;
 
 import android.graphics.Canvas;
 import android.graphics.PointF;
@@ -26,6 +26,7 @@ import android.view.Surface;
 import android.widget.FrameLayout;
 
 import com.google.vr.sdk.controller.Orientation;
+import com.thanics.andrew.halocontrol.Utils;
 
 import java.nio.FloatBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -124,8 +125,8 @@ public class CanvasQuad {
   };
   private static final FloatBuffer vertexBuffer = Utils.createBuffer(vertexData);
 
-  /** Only SceneRenderer can create a CanvasQuad. */
-  /* package */ CanvasQuad() { }
+  /** Only MainSceneRenderer can create a CanvasQuad. */
+  public CanvasQuad() { }
 
   /** Gets LayoutParams used by Android to properly layout VideoUiView. */
   public static FrameLayout.LayoutParams getLayoutParams() {
@@ -157,7 +158,7 @@ public class CanvasQuad {
   }
 
   /** Finishes constructing this object on the GL Thread. */
-  /* package */ void glInit() {
+  public void glInit() {
     if (program != 0) {
       return;
     }
@@ -186,7 +187,7 @@ public class CanvasQuad {
    *     {@link android.opengl.Matrix} format.
    * @param alpha Specifies the opacity of this quad.
    */
-  /* package */ void glDraw(float[] viewProjectionMatrix, float alpha) {
+  public void glDraw(float[] viewProjectionMatrix, float alpha) {
     // Configure shader.
     GLES20.glUseProgram(program);
     checkGlError();
@@ -228,7 +229,7 @@ public class CanvasQuad {
   }
 
   /** Frees GL resources. */
-  /* package */ void glShutdown() {
+  public void glShutdown() {
     if (program != 0) {
       GLES20.glDeleteProgram(program);
       GLES20.glDeleteTextures(1, new int[]{textureId}, 0);
@@ -250,7 +251,7 @@ public class CanvasQuad {
    *
    * @param orientation a {@link com.google.vr.sdk.controller.Controller}'s {@link Orientation}.
    */
-  /* package */ static PointF translateClick(Orientation orientation) {
+  public static PointF translateClick(Orientation orientation) {
     float[] angles = orientation.toYawPitchRollRadians(new float[3]);
     // Make a rough guess of the bounds of the Quad in polar coordinates. This works as long as the
     // Quad isn't too large.

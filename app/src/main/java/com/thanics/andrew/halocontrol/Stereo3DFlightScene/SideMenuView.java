@@ -1,36 +1,71 @@
-package com.thanics.andrew.halocontrol;
+/*
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.thanics.andrew.halocontrol.Stereo3DFlightScene;
 
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
+import android.graphics.SurfaceTexture.OnFrameAvailableListener;
 import android.media.MediaPlayer;
 import android.support.annotation.AnyThread;
 import android.support.annotation.MainThread;
+import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.InputDevice;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
-public class GstVrSurfaceView extends ConstraintLayout {
+import com.thanics.andrew.halocontrol.R;
+import com.thanics.andrew.halocontrol.rendering.CanvasQuad;
 
-    CanvasQuad canvasQuad;
-
-    public SurfaceView surfaceView;
-
+/**
+ * Contains a UI that can be part of a standard 2D Android Activity or a VR Activity.
+ *
+ * <p>For 2D Activities, this View behaves like any other Android View. It receives events from the
+ * media player, updates the UI, and forwards user input to the appropriate component. In VR
+ * Activities, this View uses standard Android APIs to render its child Views to a texture that is
+ * displayed in VR. It also receives events from the Daydream Controller and forwards them to its
+ * child views.
+ */
+public class SideMenuView extends ConstraintLayout {
+    // These UI elements are only useful when the app is displaying a video.
+    private TextView statusText;
     private final UiUpdater uiUpdater = new UiUpdater();
 
-    /** Creates this View using standard XML inflation. */
-    public GstVrSurfaceView(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    // Since MediaPlayer lacks synchronization for internal events, it should only be accessed on the
+    // main thread.
+    @Nullable
+    private MediaPlayer mediaPlayer;
+    // The canvasQuad is only not null when this View is in a VR Activity. It provides the backing
+    // canvas that standard Android child Views render to.
+    @Nullable
+    private CanvasQuad canvasQuad;
 
+    /** Creates this View using standard XML inflation. */
+    public SideMenuView(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
     /**
@@ -41,19 +76,19 @@ public class GstVrSurfaceView extends ConstraintLayout {
      * @param quad the floating quad in the VR scene that will render this View
      */
     @MainThread
-    public static GstVrSurfaceView createForOpenGl(Context context, ViewGroup parent, CanvasQuad quad) {
+    public static SideMenuView createForOpenGl(Context context, ViewGroup parent, CanvasQuad quad) {
         // If a custom theme isn't specified, the Context's theme is used. For VR Activities, this is
         // the old Android default theme rather than a modern theme. Override this with a custom theme.
         Context theme = new ContextThemeWrapper(context, R.style.VrTheme);
 
-
-
-        GstVrSurfaceView view = (GstVrSurfaceView) View.inflate(theme, R.layout.gst_vr_surface, null);
-        view.surfaceView = view.findViewById(R.id.gst_vr_surface_view);
+        SideMenuView view = (SideMenuView) View.inflate(theme, R.layout.video_ui, null);
         view.canvasQuad = quad;
         view.setLayoutParams(CanvasQuad.getLayoutParams());
         view.setVisibility(View.VISIBLE);
         parent.addView(view, 0);
+
+        view.findViewById(R.id.enter_exit_vr).setContentDescription(
+                view.getResources().getString(R.string.exit_vr_label));
 
         return view;
     }
@@ -61,19 +96,8 @@ public class GstVrSurfaceView extends ConstraintLayout {
     /** Ignores 2D touch events when this View is used in a VR Activity. */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (canvasQuad == null) {
-            // Not in VR mode so use standard behavior.
-            return super.onInterceptTouchEvent(event);
-        }
 
-        if (ActivityManager.isRunningInTestHarness()) {
-            // If your app uses UI Automator tests, it's useful to have this touch system handle touch
-            // events created during tests. This allows you to create UI tests that work while the app
-            // is in VR.
-            return false;
-        }
-
-        // We are in VR mode. Synthetic events generated by SceneRenderer are marked as SOURCE_GAMEPAD
+        // We are in VR mode. Synthetic events generated by MainSceneRenderer are marked as SOURCE_GAMEPAD
         // events. For this class of events, we will let the Android Touch system handle the event so we
         // return false. Other classes of events were generated by the user accidentally touching the
         // screen where this hidden view is attached.
@@ -108,29 +132,19 @@ public class GstVrSurfaceView extends ConstraintLayout {
     @Override
     public void onFinishInflate() {
         super.onFinishInflate();
+    }
 
-//    final ImageButton playPauseToggle = (ImageButton) findViewById(R.id.play_pause_toggle);
-//    playPauseToggle.setOnClickListener(
-//        new OnClickListener() {
-//          @Override
-//          public void onClick(View v) {
-//            if (mediaPlayer == null) {
-//              return;
-//            }
-//
-//            if (mediaPlayer.isPlaying()) {
-//              mediaPlayer.pause();
-//              playPauseToggle.setBackgroundResource(R.drawable.play_button);
-//              playPauseToggle.setContentDescription(getResources().getString(R.string.play_label));
-//            } else {
-//              mediaPlayer.start();
-//              playPauseToggle.setBackgroundResource(R.drawable.pause_button);
-//              playPauseToggle.setContentDescription(getResources().getString(R.string.pause_label));
-//            }
-//          }
-//        });
+    /** Sets the OnClickListener used to switch Activities. */
+    @MainThread
+    public void setVrIconClickListener(OnClickListener listener) {
+        ImageButton vrIcon = findViewById(R.id.enter_exit_vr);
+        vrIcon.setOnClickListener(listener);
+    }
 
-//    statusText = findViewById(R.id.status_text);
+    @MainThread
+    public void setStereoStreamClickListener(OnClickListener listener) {
+        Button stereoButton = findViewById(R.id.stereoButton);
+        stereoButton.setOnClickListener(listener);
     }
 
     /**
@@ -141,34 +155,29 @@ public class GstVrSurfaceView extends ConstraintLayout {
      */
     @Override
     public void dispatchDraw(Canvas androidUiCanvas) {
-        if (canvasQuad == null) {
-            // Handle non-VR rendering.
-            super.dispatchDraw(androidUiCanvas);
-            return;
-        }
+        if (canvasQuad != null) {
+            Canvas glCanvas = canvasQuad.lockCanvas();
+            if (glCanvas == null) {
+                // This happens if Android tries to draw this View before GL initialization completes. We need
+                // to retry until the draw call happens after GL invalidation.
+                postInvalidate();
+                return;
+            }
 
-        // Handle VR rendering.
-        Canvas glCanvas = canvasQuad.lockCanvas();
-        if (glCanvas == null) {
-            // This happens if Android tries to draw this View before GL initialization completes. We need
-            // to retry until the draw call happens after GL invalidation.
-            postInvalidate();
-            return;
+            // Clear the canvas first.
+            glCanvas.drawColor(Color.BLACK);
+            // Have Android render the child views.
+            super.dispatchDraw(glCanvas);
+            // Commit the changes.
+            canvasQuad.unlockCanvasAndPost(glCanvas);
         }
-
-        // Clear the canvas first.
-        glCanvas.drawColor(Color.BLACK);
-        // Have Android render the child views.
-        super.dispatchDraw(glCanvas);
-        // Commit the changes.
-        canvasQuad.unlockCanvasAndPost(glCanvas);
     }
 
     /**
      * Gets the listener used to update the seek bar's position on each new video frame.
      *
      * @return a listener that can be passed to
-     *     {@link SurfaceTexture#setOnFrameAvailableListener(SurfaceTexture.OnFrameAvailableListener)}
+     *     {@link SurfaceTexture#setOnFrameAvailableListener(OnFrameAvailableListener)}
      */
     public SurfaceTexture.OnFrameAvailableListener getFrameListener() {
         return uiUpdater;
@@ -176,7 +185,6 @@ public class GstVrSurfaceView extends ConstraintLayout {
 
     /** Updates the seek bar and status text. */
     private final class UiUpdater implements SurfaceTexture.OnFrameAvailableListener {
-        private int videoDurationMs = 0;
 
         // onFrameAvailable is called on an arbitrary thread, but we can only access mediaPlayer on the
         // main thread.
@@ -184,6 +192,10 @@ public class GstVrSurfaceView extends ConstraintLayout {
             @Override
             public void run() {
 
+                if (canvasQuad != null) {
+                    // When in VR, we will need to manually invalidate this View.
+                    invalidate();
+                }
             }
         };
 

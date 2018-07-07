@@ -1,4 +1,4 @@
-package com.thanics.andrew.halocontrol;
+package com.thanics.andrew.halocontrol.Stereo3DFlightScene;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -7,6 +7,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
+
+import com.thanics.andrew.halocontrol.R;
 
 import org.freedesktop.gstreamer.GStreamer;
 

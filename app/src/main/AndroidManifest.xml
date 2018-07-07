@@ -21,8 +21,6 @@
         android:name="android.hardware.vr.high_performance"
         android:required="true" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
     <!-- Make accelerometer and gyroscope hard requirements for good head tracking. -->
     <uses-feature
         android:name="android.hardware.sensor.accelerometer"
@@ -33,7 +31,7 @@
 
     <application android:largeHeap="true">
         <activity
-            android:name=".VrMainActivity"
+            android:name=".MainScene.VrMainActivity"
             android:configChanges="density|keyboardHidden|navigation|orientation|screenSize|uiMode"
             android:enableVrMode="@string/gvr_vr_mode_component"
             android:label="HaloVR"
@@ -61,22 +59,19 @@
                 android:name="com.google.android.vr.icon_background"
                 android:resource="@mipmap/halo_drone_app_icon" />
         </activity>
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainScene.MainActivity">
 
             <!-- <intent-filter> -->
             <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             <!-- </intent-filter> -->
         </activity>
         <activity
-            android:name=".StereoFlightActivity"
+            android:name=".Stereo3DFlightScene.StereoFlightActivity"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
 
         </activity>
-        <activity android:name=".VideoActivity">
-
-        </activity>
-        <activity android:name=".VrStereoActivity">
+        <activity android:name=".Stereo3DFlightScene.VrStereoActivity">
 
         </activity>
     </application>
